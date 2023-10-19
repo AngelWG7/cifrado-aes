@@ -1,101 +1,57 @@
 import React, { useState } from 'react';
+import CryptoJS from 'crypto-js';
+import './AESCrypto.css';
 
 function AESCrypto() {
-  const [inputText, setInputText] = useState('');
-  const [encryptedText, setEncryptedText] = useState('');
-  const [decryptedText, setDecryptedText] = useState('');
-  const [encryptionKey, setEncryptionKey] = useState(null);
 
-  // Función para generar una clave AES-GCM
-  const generateAESKey = async () => {
-    try {
-      const key = await window.crypto.subtle.generateKey(
-        {
-          name: 'AES-GCM',
-          length: 256, // Puedes usar 128, 192 o 256 bits
-        },
-        true,
-        ['encrypt', 'decrypt']
-      );
-      setEncryptionKey(key);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    const [message, setMessage] = useState('');
+    const [key, setKey] = useState('');
+    const [encryptedMessage, setEncryptedMessage] = useState('');
+    const [decryptedMessage, setDecryptedMessage] = useState('');
+    const [encripted, setEncripted] = useState(true);
 
-  // Función para cifrar un mensaje
-  const encryptAES = async () => {
-    if (!encryptionKey) {
-      console.error('Genera una clave antes de cifrar.');
-      return;
-    }
+    const encryptMessage = () => {
+        const ciphertext = CryptoJS.AES.encrypt(message, key).toString();
+        setEncryptedMessage(ciphertext);
+        setEncripted(true);
+    };
 
-    const encoder = new TextEncoder();
-    const encodedData = encoder.encode(inputText);
+    const decryptMessage = () => {
+        const bytes = CryptoJS.AES.decrypt(encryptedMessage, key);
+        const originalText = bytes.toString(CryptoJS.enc.Utf8);
+        setDecryptedMessage(originalText);
+        setEncripted(false);
+    };
 
-    try {
-      const iv = window.crypto.getRandomValues(new Uint8Array(12)); // Vector de inicialización de 12 bytes
-      const encryptedData = await window.crypto.subtle.encrypt(
-        {
-          name: 'AES-GCM',
-          iv,
-        },
-        encryptionKey,
-        encodedData
-      );
-      setEncryptedText(btoa(String.fromCharCode.apply(null, new Uint8Array(encryptedData))));
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  // Función para descifrar un mensaje
-  const decryptAES = async () => {
-    if (!encryptionKey) {
-      console.error('Genera una clave antes de descifrar.');
-      return;
-    }
-
-    const encryptedArray = new Uint8Array(atob(encryptedText).split('').map(char => char.charCodeAt(0)));
-
-    try {
-      const decryptedData = await window.crypto.subtle.decrypt(
-        {
-          name: 'AES-GCM',
-          iv: encryptedArray.slice(0, 12),
-        },
-        encryptionKey,
-        encryptedArray.slice(12)
-      );
-
-      const decoder = new TextDecoder();
-      setDecryptedText(decoder.decode(decryptedData));
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  return (
-    <div>
-      <button onClick={generateAESKey}>Generar Clave</button>
-      <div>
-        <input
-          type="text"
-          placeholder="Texto a cifrar"
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-        />
-        <button onClick={encryptAES}>Cifrar</button>
-      </div>
-      <div>
-        <p>Texto Cifrado: {encryptedText}</p>
-        <button onClick={decryptAES}>Descifrar</button>
-      </div>
-      <div>
-        <p>Texto Descifrado: {decryptedText}</p>
-      </div>
-    </div>
-  );
+    return (
+        <div className="crypto-container">
+            <h1>Cifrado AES-GCM</h1>
+            <div className="input-section">
+                <p><strong>Mensaje:</strong></p>
+                <input
+                    type="text"
+                    placeholder="Texto a cifrar"
+                    className='input1'
+                    onChange={(e) => setMessage(e.target.value)}
+                />
+            </div>
+            <div className="input-section">
+                <p><strong>Clave:</strong></p>
+                <input
+                    type="text"
+                    placeholder="5"
+                    className='input2'
+                    onChange={(e) => setKey(e.target.value)}
+                />
+            </div>
+            <div className="result-section">
+                <button className='boton1' onClick={encryptMessage}>Cifrar</button>
+                <button onClick={decryptMessage}>Descifrar</button>
+                {encripted ? <p><strong>Texto Cifrado:</strong> {encryptedMessage}</p> :
+                <p><strong>Texto Descifrado:</strong> {decryptedMessage}</p>}
+            </div>
+        </div>
+    );
 }
 
 export default AESCrypto;
